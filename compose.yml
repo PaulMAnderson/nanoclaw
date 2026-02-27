@@ -1,0 +1,60 @@
+services:
+  nanoclaw:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nanoclaw
+    restart: unless-stopped
+
+    environment:
+      # Required: your Anthropic API key
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}
+      # Optional: override assistant name (default: Andy)
+      - ASSISTANT_NAME=${ASSISTANT_NAME:-Andy}
+      # Optional: set to "true" if the assistant has its own WhatsApp number
+      - ASSISTANT_HAS_OWN_NUMBER=${ASSISTANT_HAS_OWN_NUMBER:-false}
+      # Tell Docker CLI to use the isolated nanoclaw daemon, not the host daemon
+      - DOCKER_HOST=unix:///var/run/nanoclaw-docker.sock
+      # Where to find things
+      - PROJECT_ROOT=/home/nanoclaw/app
+
+    volumes:
+      # --- Isolated Docker daemon socket (NOT the host /var/run/docker.sock) ---
+      # This is nanoclaw user's private daemon at /run/user/1667/docker.sock
+      - /run/user/1667/docker.sock:/var/run/nanoclaw-docker.sock
+
+      # --- Persistent data as bind mounts under nanoclaw's home ---
+      # Must be bind mounts (not named volumes) so the nanoclaw daemon can
+      # mount subdirectories of these paths into agent containers
+      - /home/nanoclaw/app/store:/app/store
+      - /home/nanoclaw/app/data:/app/data
+      - /home/nanoclaw/app/groups:/app/groups
+
+      # --- Mount allowlist (controls what agents can access) ---
+      # Stored outside the project root as per nanoclaw's security model
+      - ${HOME}/.config/nanoclaw:/home/nanoclaw/.config/nanoclaw:ro
+
+    # No network ports needed - WhatsApp connects outbound only
+    # Remove the network_mode line if you need to expose any local services
+    network_mode: bridge
+
+  memsearch:
+    image: python:3.12-slim
+    command: >
+      sh -c "pip install --quiet 'memsearch[ollama]' fastapi uvicorn &&
+             python /app/memsearch_service.py"
+    volumes:
+      - /home/nanoclaw/app/groups:/groups:ro
+      - /home/nanoclaw/app/store:/store
+      - ./memsearch_service.py:/app/memsearch_service.py:ro
+    extra_hosts:
+      - "host-gateway:host-gateway"
+    ports:
+      - "127.0.0.1:8001:8001"
+    restart: unless-stopped
+
+volumes:
+  nanoclaw-store:
+  nanoclaw-data:
+  nanoclaw-groups:

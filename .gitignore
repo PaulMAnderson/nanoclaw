@@ -13,10 +13,22 @@ logs/
 groups/*
 !groups/main/
 !groups/global/
+!groups/health/
+!groups/work/
+!groups/hobbies/
+!groups/home-automation/
 groups/main/*
 groups/global/*
+groups/health/*
+groups/work/*
+groups/hobbies/*
+groups/home-automation/*
 !groups/main/CLAUDE.md
 !groups/global/CLAUDE.md
+!groups/health/CLAUDE.md
+!groups/work/CLAUDE.md
+!groups/hobbies/CLAUDE.md
+!groups/home-automation/CLAUDE.md
 
 # Secrets
 *.keys.json

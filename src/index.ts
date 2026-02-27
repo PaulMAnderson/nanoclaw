@@ -126,6 +126,28 @@ export function _setRegisteredGroups(
   registeredGroups = groups;
 }
 
+// Project groups that have semantic memory indexed by memsearch
+const MEMORY_PROJECTS = new Set(['health', 'work', 'hobbies', 'home-automation']);
+
+/**
+ * Recall semantically relevant memory snippets from memsearch sidecar.
+ * Returns an XML-wrapped context string, or empty string if unavailable.
+ */
+async function recallMemory(project: string, query: string): Promise<string> {
+  try {
+    const url =
+      `http://localhost:8001/search?query=${encodeURIComponent(query)}&project=${encodeURIComponent(project)}&limit=5`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    if (!res.ok) return '';
+    const { results } = (await res.json()) as { results?: Array<{ content: string }> };
+    if (!results?.length) return '';
+    const items = results.map((r) => r.content).join('\n---\n');
+    return `<memory_context>\n${items}\n</memory_context>\n\n`;
+  } catch {
+    return ''; // Silently skip if memsearch is unavailable
+  }
+}
+
 /**
  * Process all pending messages for a group.
  * Called by the GroupQueue when it's this group's turn.
@@ -159,7 +181,19 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
     if (!hasTrigger) return true;
   }
 
-  const prompt = formatMessages(missedMessages);
+  const rawPrompt = formatMessages(missedMessages);
+
+  // Prepend semantic memory context for project groups
+  let prompt = rawPrompt;
+  if (MEMORY_PROJECTS.has(group.folder)) {
+    // Use last user message as the search query for relevance
+    const lastUserMsg = missedMessages[missedMessages.length - 1]?.content ?? rawPrompt;
+    const memCtx = await recallMemory(group.folder, lastUserMsg.slice(0, 500));
+    if (memCtx) {
+      prompt = memCtx + rawPrompt;
+      logger.debug({ group: group.name }, 'Memory context injected');
+    }
+  }
 
   // Advance cursor so the piping path in startMessageLoop won't re-fetch
   // these messages. Save the old cursor so we can roll back on error.

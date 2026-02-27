@@ -2,7 +2,7 @@
 memsearch_service.py — Minimal FastAPI semantic memory search endpoint.
 
 Indexes markdown files under /groups/{project}/memory/ using Ollama embeddings
-(qwen3-embedding via host-gateway:10001) and Milvus Lite for vector storage.
+(qwen3-embedding via 192.168.1.254:10001) and Milvus Lite for vector storage.
 
 Endpoints:
   GET  /search?query=<str>&project=<str>&limit=<int>  -- semantic search
@@ -24,7 +24,6 @@ logging.basicConfig(level=logging.INFO)
 app = FastAPI(title="memsearch", version="0.1.0")
 
 PROJECTS = {"health", "work", "hobbies", "home-automation"}
-OLLAMA_BASE_URL = "http://host-gateway:10001"
 EMBEDDING_MODEL = "qwen3-embedding:latest"
 
 
@@ -40,11 +39,11 @@ def get_searcher(project: str):
     """Return a MemSearch instance for the given project."""
     from memsearch import MemSearch
 
+    # OLLAMA_HOST env var is set in compose.yml and read by the ollama client
     return MemSearch(
         paths=[_memory_path(project)],
         embedding_provider="ollama",
-        ollama_model=EMBEDDING_MODEL,
-        ollama_base_url=OLLAMA_BASE_URL,
+        embedding_model=EMBEDDING_MODEL,
         milvus_uri=_db_path(project),
     )
 
@@ -65,7 +64,7 @@ async def search(query: str, project: str, limit: int = 5):
         results = await searcher.search(query, top_k=limit)
         return {
             "results": [
-                {"content": r.content, "score": float(r.score), "source": getattr(r, "source", None)}
+                {"content": r["content"], "score": float(r.get("score", 0)), "source": r.get("source")}
                 for r in results
             ]
         }

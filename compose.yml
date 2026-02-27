@@ -44,12 +44,12 @@ services:
     command: >
       sh -c "pip install --quiet 'memsearch[ollama]' fastapi uvicorn &&
              python /app/memsearch_service.py"
+    environment:
+      - OLLAMA_HOST=http://192.168.1.254:10001
     volumes:
       - /home/nanoclaw/app/groups:/groups:ro
       - /home/nanoclaw/app/store:/store
       - ./memsearch_service.py:/app/memsearch_service.py:ro
-    extra_hosts:
-      - "host-gateway:host-gateway"
     ports:
       - "127.0.0.1:8001:8001"
     restart: unless-stopped

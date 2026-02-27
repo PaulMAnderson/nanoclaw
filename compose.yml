@@ -41,6 +41,7 @@ services:
 
   memsearch:
     image: python:3.12-slim
+    container_name: memsearch
     command: >
       sh -c "pip install --quiet 'memsearch[ollama]' fastapi uvicorn &&
              python /app/memsearch_service.py"

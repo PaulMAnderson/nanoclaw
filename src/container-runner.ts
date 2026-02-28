@@ -2,7 +2,7 @@
  * Container Runner for NanoClaw
  * Spawns agent execution in containers and handles IPC
  */
-import { ChildProcess, exec, spawn } from 'child_process';
+import { ChildProcess, exec, execSync, spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
@@ -109,7 +109,9 @@ function buildVolumeMounts(
     '.claude',
   );
   fs.mkdirSync(groupSessionsDir, { recursive: true });
-  fs.chmodSync(groupSessionsDir, 0o777); // container runs as remapped UID — needs world-write
+  // Rootless Docker remaps container UIDs — chmod -R 777 ensures the container
+  // (and subdirs it creates like debug/, todos/) stay world-writable on re-entry.
+  execSync(`chmod -R 777 ${groupSessionsDir}`);
   const settingsFile = path.join(groupSessionsDir, 'settings.json');
   if (!fs.existsSync(settingsFile)) {
     fs.writeFileSync(
@@ -250,6 +252,10 @@ export async function runContainerAgent(
 
   const groupDir = resolveGroupFolderPath(group.folder);
   fs.mkdirSync(groupDir, { recursive: true });
+  // Rootless Docker UID remapping: ensure the container can write to the group
+  // workspace (logs, memory files). chmod -R 777 is safe here — the group dir
+  // is isolated per-group and already bind-mounted with intentional write access.
+  execSync(`chmod -R 777 ${groupDir}`);
 
   const mounts = buildVolumeMounts(group, input.isMain);
   const safeName = group.folder.replace(/[^a-zA-Z0-9-]/g, '-');

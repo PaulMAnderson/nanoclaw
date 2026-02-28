@@ -17,18 +17,22 @@ groups/*
 !groups/work/
 !groups/hobbies/
 !groups/home-automation/
+!groups/home/
 groups/main/*
 groups/global/*
 groups/health/*
 groups/work/*
 groups/hobbies/*
 groups/home-automation/*
+groups/home/*
 !groups/main/CLAUDE.md
 !groups/global/CLAUDE.md
 !groups/health/CLAUDE.md
 !groups/work/CLAUDE.md
 !groups/hobbies/CLAUDE.md
 !groups/home-automation/CLAUDE.md
+!groups/home/CLAUDE.md
+!groups/home/ha-helper.sh
 
 # Track memory scaffold files but not runtime data or vector DB
 !groups/main/memory/
@@ -36,16 +40,19 @@ groups/home-automation/*
 !groups/work/memory/
 !groups/hobbies/memory/
 !groups/home-automation/memory/
+!groups/home/memory/
 groups/main/memory/*
 groups/health/memory/*
 groups/work/memory/*
 groups/hobbies/memory/*
 groups/home-automation/memory/*
+groups/home/memory/*
 !groups/main/memory/MEMORY.md
 !groups/health/memory/MEMORY.md
 !groups/work/memory/MEMORY.md
 !groups/hobbies/memory/MEMORY.md
 !groups/home-automation/memory/MEMORY.md
+!groups/home/memory/MEMORY.md
 
 # Secrets
 *.keys.json

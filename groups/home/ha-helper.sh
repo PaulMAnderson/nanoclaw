@@ -1,7 +1,7 @@
 #!/bin/bash
 # Home Assistant API Helper for NanoClaw
 
-HA_URL="${HA_URL:-http://hypercube:8123}"
+HA_URL="${HA_URL:-http://192.168.1.254:8123}"
 HA_TOKEN="${HA_TOKEN:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjYmI4ZGE0NGI2MTQ0NjhhYmIwZTNlZDgwNTI3ZGViNiIsImlhdCI6MTc3MjI4Nzc2OSwiZXhwIjoyMDg3NjQ3NzY5fQ.5AQQXdGs9xCBIcAoNJj2fMlF4cMbSWw91ekTTNNhVWQ}"
 
 ha_api() {

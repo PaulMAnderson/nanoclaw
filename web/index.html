@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NanoClaw</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <!-- Sidebar -->
+  <nav id="sidebar">
+    <div id="sidebar-header">
+      NanoClaw
+      <small>Dashboard</small>
+    </div>
+    <div id="nav">
+      <button class="nav-btn active" data-view="dashboard">&#9632; Dashboard</button>
+      <button class="nav-btn" data-view="chat">&#9658; Chat</button>
+      <button class="nav-btn" data-view="memory">&#9432; Memory</button>
+      <button class="nav-btn" data-view="tasks">&#9201; Tasks</button>
+    </div>
+    <div style="padding:8px 8px 4px;margin-top:8px;font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;border-top:1px solid var(--border)">Groups</div>
+    <div id="group-list"></div>
+  </nav>
+
+  <!-- Main -->
+  <main id="main">
+    <!-- Dashboard -->
+    <div class="view active" id="view-dashboard">
+      <div class="view-header"><h2>Dashboard</h2></div>
+      <div id="dashboard-content"><div class="empty">Loading...</div></div>
+    </div>
+
+    <!-- Chat -->
+    <div class="view" id="view-chat">
+      <div class="view-header">
+        <h2>Chat</h2>
+        <span class="badge" id="chat-group-badge">no group selected</span>
+      </div>
+      <div id="memory-context-bar">&#x1F9E0; Memory context recalled for this message.</div>
+      <div id="chat-messages"><div class="empty">Select a group from the sidebar to start chatting.</div></div>
+      <div id="chat-input-row">
+        <textarea id="chat-input" placeholder="Message..." disabled rows="1"></textarea>
+        <button id="chat-send" disabled>Send</button>
+      </div>
+    </div>
+
+    <!-- Memory -->
+    <div class="view" id="view-memory">
+      <div class="view-header">
+        <h2>Memory</h2>
+        <span class="badge" id="memory-group-badge">no group selected</span>
+      </div>
+      <div id="memory-search-bar">
+        <input id="memory-search-input" type="text" placeholder="Semantic search...">
+        <button id="memory-search-btn">Search</button>
+      </div>
+      <div id="memory-layout">
+        <div id="memory-sidebar"></div>
+        <div id="memory-content"><div class="empty">Select a group, then a file.</div></div>
+      </div>
+    </div>
+
+    <!-- Tasks -->
+    <div class="view" id="view-tasks">
+      <div class="view-header"><h2>Scheduled Tasks</h2></div>
+      <div id="tasks-content"><div class="empty">Loading...</div></div>
+    </div>
+  </main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

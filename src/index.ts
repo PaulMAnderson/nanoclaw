@@ -10,6 +10,7 @@ import {
 } from './config.js';
 import { WhatsAppChannel } from './channels/whatsapp.js';
 import { ensureMemoryDir, indexMemories, recallMemories } from './memory.js';
+import { WebChannel, isWebJid, webJid } from './channels/web.js';
 
 import {
   ContainerOutput,
@@ -126,6 +127,21 @@ export function _setRegisteredGroups(
   groups: Record<string, RegisteredGroup>,
 ): void {
   registeredGroups = groups;
+}
+
+/**
+ * Add in-memory web: JID mirrors for all registered groups.
+ * Web messages use synthetic "web:{folder}" JIDs so the web channel
+ * owns routing while still sharing the group's container and filesystem.
+ */
+function syncWebGroups(): void {
+  for (const [jid, group] of Object.entries(registeredGroups)) {
+    if (isWebJid(jid)) continue;
+    const wj = webJid(group.folder);
+    if (!registeredGroups[wj]) {
+      registeredGroups[wj] = { ...group, requiresTrigger: false };
+    }
+  }
 }
 
 /**
@@ -459,6 +475,7 @@ async function main(): Promise<void> {
   initDatabase();
   logger.info('Database initialized');
   loadState();
+  syncWebGroups();
 
   // Graceful shutdown handlers
   const shutdown = async (signal: string) => {
@@ -487,6 +504,11 @@ async function main(): Promise<void> {
   whatsapp = new WhatsAppChannel(channelOpts);
   channels.push(whatsapp);
   await whatsapp.connect();
+
+  // Web UI channel — HTTP + WebSocket on WEB_PORT
+  const web = new WebChannel(channelOpts);
+  channels.push(web);
+  await web.connect();
 
   // Start subsystems (independently of connection handler)
   startSchedulerLoop({

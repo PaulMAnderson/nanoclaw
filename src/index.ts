@@ -9,6 +9,8 @@ import {
   TRIGGER_PATTERN,
 } from './config.js';
 import { WhatsAppChannel } from './channels/whatsapp.js';
+import { ensureMemoryDir, indexMemories, recallMemories } from './memory.js';
+
 import {
   ContainerOutput,
   runContainerAgent,
@@ -161,6 +163,9 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
 
   const rawPrompt = formatMessages(missedMessages);
 
+  const groupDir = resolveGroupFolderPath(group.folder);
+  ensureMemoryDir(groupDir);
+  recallMemories(groupDir, missedMessages[missedMessages.length - 1]?.content?.slice(0, 500) ?? rawPrompt);
   const prompt = rawPrompt;
 
   // Advance cursor so the piping path in startMessageLoop won't re-fetch
@@ -222,6 +227,8 @@ async function processGroupMessages(chatJid: string): Promise<boolean> {
 
   await channel.setTyping?.(chatJid, false);
   if (idleTimer) clearTimeout(idleTimer);
+
+  indexMemories(groupDir);
 
   if (output === 'error' || hadError) {
     // If we already sent output to the user, don't roll back the cursor —

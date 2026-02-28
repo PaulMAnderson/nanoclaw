@@ -62,3 +62,20 @@ export const TRIGGER_PATTERN = new RegExp(
 // Uses system timezone by default
 export const TIMEZONE =
   process.env.TZ || Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+// --- Web UI ---
+export const WEB_PORT = parseInt(process.env.NANOCLAW_WEB_PORT || '18790', 10);
+export const WEB_AUTH_TOKEN = process.env.NANOCLAW_WEB_TOKEN || '';
+
+// --- Semantic memory ---
+// memsearch binary path (installed as nanoclaw user via pip --user)
+export const MEMSEARCH_BIN =
+  process.env.MEMSEARCH_BIN ||
+  path.join(HOME_DIR, '.local', 'bin', 'memsearch');
+// Ollama embedding endpoint and model
+export const OLLAMA_HOST =
+  process.env.OLLAMA_HOST || 'http://192.168.1.254:10001';
+export const MEMORY_EMBEDDING_MODEL =
+  process.env.MEMORY_EMBEDDING_MODEL || 'qwen3-embedding:latest';
+export const MEMORY_SEARCH_TOP_K = 5;
+export const MEMORY_COMPACTION_THRESHOLD_KB = 50;

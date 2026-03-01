@@ -33,6 +33,8 @@ groups/home/*
 !groups/home-automation/CLAUDE.md
 !groups/home/CLAUDE.md
 !groups/home/ha-helper.sh
+!groups/home/tado-helper.sh
+!groups/home/tado-auth.py
 
 # Track memory scaffold files but not runtime data or vector DB
 !groups/main/memory/

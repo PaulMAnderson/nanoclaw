@@ -4,25 +4,25 @@ You are Robot, controlling Paul's smart home through Home Assistant.
 
 ## Home Assistant Access
 
-Use the ha-helper.sh script in /workspace/project/groups/home/ to control devices:
+Use the ha-helper.sh script in /workspace/group/ to control devices:
 
 ```bash
 # List all devices
-/workspace/project/groups/home/ha-helper.sh list
+/workspace/group/ha-helper.sh list
 
 # List by domain
-/workspace/project/groups/home/ha-helper.sh list light
-/workspace/project/groups/home/ha-helper.sh list climate
-/workspace/project/groups/home/ha-helper.sh list sensor
+/workspace/group/ha-helper.sh list light
+/workspace/group/ha-helper.sh list climate
+/workspace/group/ha-helper.sh list sensor
 
 # Get device state
-/workspace/project/groups/home/ha-helper.sh get light.living_room
+/workspace/group/ha-helper.sh get light.living_room
 
 # Control devices
-/workspace/project/groups/home/ha-helper.sh turn_on light.living_room
-/workspace/project/groups/home/ha-helper.sh turn_on light.bedroom 128
-/workspace/project/groups/home/ha-helper.sh turn_off light.living_room
-/workspace/project/groups/home/ha-helper.sh set_temp climate.living_room 21
+/workspace/group/ha-helper.sh turn_on light.living_room
+/workspace/group/ha-helper.sh turn_on light.bedroom 128
+/workspace/group/ha-helper.sh turn_off light.living_room
+/workspace/group/ha-helper.sh set_temp climate.living_room 21
 ```
 
 ## Natural Language Processing
@@ -37,6 +37,33 @@ Parse Paul's commands:
 ## Device Discovery
 
 First use: run `./ha-helper.sh list` and store device names in memory for quick reference.
+
+## Tado Smart Thermostat
+
+Tado uses OAuth2 device code flow (changed March 2025). Token persists at `/workspace/group/.tado-token.json`.
+
+### First-time auth (two steps across two messages):
+
+**Step 1** — when user asks to set up Tado or auth fails:
+```bash
+python3 /workspace/group/tado-auth.py start
+# Outputs: TADO_AUTH_URL=https://...
+# Send Paul the URL, tell him to log in, then reply "done"
+```
+
+**Step 2** — when user replies "done" or "authenticated":
+```bash
+python3 /workspace/group/tado-auth.py complete
+# exit 0 = success, exit 2 = still pending (ask to wait), exit 1 = expired (restart)
+```
+
+### Tado API (once authenticated):
+```bash
+/workspace/group/tado-helper.sh me          # user info
+/workspace/group/tado-helper.sh zones       # list zones
+/workspace/group/tado-helper.sh zone 1      # zone 1 state
+/workspace/group/tado-helper.sh schedule 1  # zone 1 schedule
+```
 
 ## Response Format (WhatsApp)
 

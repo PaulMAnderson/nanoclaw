@@ -35,7 +35,7 @@ TOKEN_FILE      = os.path.join(WORKSPACE, ".tado-token.json")
 
 def cmd_start():
     """Phase 1: request device code and print the verification URL."""
-    resp = requests.post(DEVICE_AUTH_URL, data={"client_id": CLIENT_ID}, timeout=10)
+    resp = requests.post(DEVICE_AUTH_URL, data={"client_id": CLIENT_ID, "scope": "offline_access"}, timeout=10)
     if not resp.ok:
         print(f"ERROR: device_authorize failed: {resp.status_code} {resp.text}", file=sys.stderr)
         sys.exit(1)
@@ -55,7 +55,7 @@ def cmd_start():
         "expires_at":  expires_at,
     }
     Path(PENDING_FILE).write_text(json.dumps(pending))
-    os.chmod(PENDING_FILE, 0o600)
+    os.chmod(PENDING_FILE, 0o644)
 
     print(f"TADO_AUTH_URL={verify_url}")
     if user_code:
@@ -111,7 +111,7 @@ def cmd_complete():
     # Success — save token in libtado-compatible format
     token_data = {"refresh_token": body["refresh_token"]}
     Path(TOKEN_FILE).write_text(json.dumps(token_data))
-    os.chmod(TOKEN_FILE, 0o600)
+    os.chmod(TOKEN_FILE, 0o644)
 
     # Clean up pending state
     os.remove(PENDING_FILE)

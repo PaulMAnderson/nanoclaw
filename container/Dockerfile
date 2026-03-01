@@ -3,7 +3,7 @@
 
 FROM node:22-slim
 
-# Install system dependencies for Chromium
+# Install system dependencies for Chromium and general tooling
 RUN apt-get update && apt-get install -y \
     chromium \
     fonts-liberation \
@@ -23,7 +23,20 @@ RUN apt-get update && apt-get install -y \
     libxshmfence1 \
     curl \
     git \
+    jq \
+    python3-pip \
+    python3-venv \
     && rm -rf /var/lib/apt/lists/*
+
+# Pre-install common Python packages system-wide so agents can use them immediately.
+# Agents can also pip install additional packages during a session.
+RUN pip3 install --break-system-packages \
+    requests \
+    beautifulsoup4 \
+    lxml \
+    Pillow \
+    python-dotenv \
+    httpx
 
 # Set Chromium path for agent-browser
 ENV AGENT_BROWSER_EXECUTABLE_PATH=/usr/bin/chromium

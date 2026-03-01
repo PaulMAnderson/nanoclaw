@@ -18,6 +18,7 @@
       <button class="nav-btn active" data-view="dashboard">&#9632; Dashboard</button>
       <button class="nav-btn" data-view="chat">&#9658; Chat</button>
       <button class="nav-btn" data-view="memory">&#9432; Memory</button>
+      <button class="nav-btn" data-view="logs">&#9776; Logs</button>
       <button class="nav-btn" data-view="tasks">&#9201; Tasks</button>
     </div>
     <div style="padding:8px 8px 4px;margin-top:8px;font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;border-top:1px solid var(--border)">Groups</div>
@@ -59,6 +60,19 @@
       <div id="memory-layout">
         <div id="memory-sidebar"></div>
         <div id="memory-content"><div class="empty">Select a group, then a file.</div></div>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="view" id="view-logs">
+      <div class="view-header">
+        <h2>Logs</h2>
+        <span class="badge" id="logs-group-badge">no group selected</span>
+        <button class="refresh-btn" id="logs-refresh" title="Refresh">&#8635;</button>
+      </div>
+      <div id="logs-layout">
+        <div id="logs-sidebar"><div class="empty">Select a group.</div></div>
+        <div id="logs-content"><div class="empty">Select a log entry.</div></div>
       </div>
     </div>
 

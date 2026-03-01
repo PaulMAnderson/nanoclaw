@@ -11,11 +11,12 @@ function apiFetch(path, opts = {}) {
 }
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let groups = [];           // [{ jid, folder, name }]
-let activeGroup = null;    // folder string
+let groups = [];             // [{ jid, folder, name }]
+let activeGroup = null;      // folder string
 let activeView = 'dashboard';
 let ws = null;
-let botMsgEl = null;       // current streaming bot message element
+let botMsgEl = null;         // current streaming bot message element
+let runningFolders = new Set(); // folders with active containers
 
 // ── WebSocket ─────────────────────────────────────────────────────────────────
 function connectWS() {
@@ -46,6 +47,7 @@ function showView(name) {
   if (name === 'dashboard') loadDashboard();
   else if (name === 'tasks') loadTasks();
   else if (name === 'memory' && activeGroup) loadMemoryFiles(activeGroup);
+  else if (name === 'logs' && activeGroup) loadLogs(activeGroup);
 }
 
 document.querySelectorAll('.nav-btn').forEach(b => {
@@ -64,9 +66,11 @@ function renderGroupList() {
   const list = document.getElementById('group-list');
   list.innerHTML = '';
   for (const g of groups) {
+    const isRunning = runningFolders.has(g.folder);
     const btn = document.createElement('button');
     btn.className = 'group-btn' + (activeGroup === g.folder ? ' active' : '');
-    btn.innerHTML = `<span class="group-dot"></span>${g.name}`;
+    btn.dataset.folder = g.folder;
+    btn.innerHTML = `<span class="group-dot${isRunning ? ' running' : ''}"></span>${g.name}`;
     btn.addEventListener('click', () => selectGroup(g.folder));
     list.appendChild(btn);
   }
@@ -91,6 +95,7 @@ function selectGroup(folder) {
   // Load view-specific data
   if (activeView === 'chat') loadChatHistory(folder);
   else if (activeView === 'memory') loadMemoryFiles(folder);
+  else if (activeView === 'logs') loadLogs(folder);
   else showView('chat'); // navigate to chat on group click
 }
 
@@ -101,17 +106,94 @@ async function loadDashboard() {
   const data = await res.json();
   const el = document.getElementById('dashboard-content');
   if (!data.groups.length) { el.innerHTML = '<div class="empty">No groups registered.</div>'; return; }
-  el.innerHTML = data.groups.map(g => `
+  el.innerHTML = data.groups.map(g => {
+    const isRunning = runningFolders.has(g.folder);
+    return `
     <div class="group-card" data-folder="${g.folder}">
-      <h3>${g.name}</h3>
+      <h3>${escHtml(g.name)}${isRunning ? '<span class="running-chip">&#9679; running</span>' : ''}</h3>
       <div class="stat">&#x1F9E0; ${g.memoryFiles} memory file${g.memoryFiles !== 1 ? 's' : ''}</div>
       <div class="stat">&#x1F4BE; ${(g.memoryBytes / 1024).toFixed(1)} KB</div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
   el.querySelectorAll('.group-card').forEach(card => {
     card.addEventListener('click', () => { selectGroup(card.dataset.folder); showView('chat'); });
   });
 }
+
+// ── Containers ────────────────────────────────────────────────────────────────
+async function pollContainers() {
+  try {
+    const res = await apiFetch('/api/containers');
+    if (!res.ok) return;
+    const containers = await res.json();
+    const prev = runningFolders;
+    runningFolders = new Set(containers.map(c => c.folder));
+    // Only re-render if something changed
+    const changed = runningFolders.size !== prev.size ||
+      [...runningFolders].some(f => !prev.has(f)) ||
+      [...prev].some(f => !runningFolders.has(f));
+    if (changed) {
+      renderGroupList();
+      if (activeView === 'dashboard') loadDashboard();
+    }
+  } catch { /* ignore */ }
+}
+
+// ── Logs ──────────────────────────────────────────────────────────────────────
+function relTime(isoStr) {
+  if (!isoStr) return '';
+  const diff = Date.now() - new Date(isoStr).getTime();
+  if (diff < 60000) return 'just now';
+  if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+  return Math.floor(diff / 86400000) + 'd ago';
+}
+
+async function loadLogs(folder) {
+  const sidebar = document.getElementById('logs-sidebar');
+  const content = document.getElementById('logs-content');
+  document.getElementById('logs-group-badge').textContent = groups.find(g => g.folder === folder)?.name ?? folder;
+  sidebar.innerHTML = '<div class="empty">Loading...</div>';
+  content.innerHTML = '<div class="empty">Select a log entry.</div>';
+
+  const res = await apiFetch(`/api/groups/${folder}/logs`);
+  if (!res.ok) { sidebar.innerHTML = '<div class="empty">No logs.</div>'; return; }
+  const entries = await res.json();
+  if (!entries.length) { sidebar.innerHTML = '<div class="empty">No logs yet.</div>'; return; }
+
+  sidebar.innerHTML = '';
+  for (const e of entries) {
+    const btn = document.createElement('button');
+    btn.className = 'log-entry-btn';
+    const exitOk = e.exitCode === '0';
+    btn.innerHTML =
+      `<span class="log-time">${relTime(e.timestamp)}</span>` +
+      `<span class="log-exit ${exitOk ? 'ok' : 'fail'}">${exitOk ? '✓' : '✗'} ${e.exitCode}</span>` +
+      `<span class="log-dur">${e.duration}</span>`;
+    btn.addEventListener('click', () => loadLog(folder, e.filename, btn));
+    sidebar.appendChild(btn);
+  }
+}
+
+async function loadLog(folder, filename, btn) {
+  document.querySelectorAll('.log-entry-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const content = document.getElementById('logs-content');
+  content.innerHTML = '<div class="empty">Loading...</div>';
+  const res = await apiFetch(`/api/groups/${folder}/logs/${encodeURIComponent(filename)}`);
+  if (!res.ok) { content.innerHTML = '<div class="empty">Could not load log.</div>'; return; }
+  const text = await res.text();
+  // Colorize section headers and key: value metadata lines
+  const colorized = escHtml(text)
+    .replace(/^(=== .+ ===)$/gm, '<span class="log-h">$1</span>')
+    .replace(/^(Timestamp|Group|IsMain|Duration|Exit Code|Stdout Truncated|Stderr Truncated): (.+)$/gm,
+      '<span class="log-k">$1:</span> <span class="log-v">$2</span>');
+  content.innerHTML = `<pre class="log-pre">${colorized}</pre>`;
+}
+
+document.getElementById('logs-refresh').addEventListener('click', () => {
+  if (activeGroup) loadLogs(activeGroup);
+});
 
 // ── Chat ──────────────────────────────────────────────────────────────────────
 async function loadChatHistory(folder) {
@@ -255,6 +337,8 @@ function escHtml(s) {
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 connectWS();
+pollContainers();
+setInterval(pollContainers, 5000);
 loadGroups().then(() => {
   if (groups.length) {
     // Auto-select first group

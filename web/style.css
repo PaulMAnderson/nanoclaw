@@ -98,6 +98,30 @@ html, body { height: 100%; font-family: system-ui, -apple-system, sans-serif; fo
 .status.active { background: rgba(52,211,153,0.15); color: var(--success); }
 .status.paused { background: rgba(248,113,113,0.15); color: var(--danger); }
 
+/* ── Running indicators ── */
+.group-dot.running { background: var(--success); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.running-chip { font-size: 10px; color: var(--success); margin-left: 8px; font-weight: 400; vertical-align: middle; animation: pulse 2s ease-in-out infinite; }
+
+/* ── Logs view ── */
+#logs-layout { display: flex; flex: 1; overflow: hidden; }
+#logs-sidebar { width: 220px; border-right: 1px solid var(--border); overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.log-entry-btn { background: none; border: none; color: var(--text-dim); padding: 8px 10px; border-radius: var(--radius); text-align: left; cursor: pointer; font-size: 12px; width: 100%; transition: background 0.15s, color 0.15s; display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; }
+.log-entry-btn:hover { background: var(--surface2); color: var(--text); }
+.log-entry-btn.active { background: var(--surface2); color: var(--accent2); }
+.log-time { font-size: 11px; }
+.log-exit { font-size: 10px; padding: 1px 5px; border-radius: 4px; white-space: nowrap; }
+.log-exit.ok  { background: rgba(52,211,153,0.15); color: var(--success); }
+.log-exit.fail { background: rgba(248,113,113,0.15); color: var(--danger); }
+.log-dur { font-size: 10px; color: var(--text-dim); }
+#logs-content { flex: 1; overflow-y: auto; padding: 16px; }
+.log-pre { background: var(--surface); border: 1px solid var(--border); padding: 16px; border-radius: var(--radius); white-space: pre-wrap; word-break: break-all; font-family: 'SF Mono', 'Consolas', monospace; font-size: 12px; line-height: 1.6; }
+.log-h { color: var(--accent); font-weight: 600; }
+.log-k { color: var(--text-dim); }
+.log-v { color: var(--text); }
+.refresh-btn { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--text-dim); padding: 3px 10px; border-radius: var(--radius); cursor: pointer; font-size: 15px; transition: color 0.15s; }
+.refresh-btn:hover { color: var(--accent); }
+
 /* ── Misc ── */
 .empty { color: var(--text-dim); font-size: 13px; padding: 20px; text-align: center; }
 ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }

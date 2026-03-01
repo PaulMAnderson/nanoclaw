@@ -12,6 +12,9 @@
  *   GET  /api/groups/:folder/memory/search?q=...
  *   GET  /api/groups/:folder/memory/:file
  *   PUT  /api/groups/:folder/memory/:file
+ *   GET  /api/groups/:folder/logs
+ *   GET  /api/groups/:folder/logs/:filename
+ *   GET  /api/containers
  *   GET  /api/tasks
  *   GET  /api/dashboard
  *
@@ -171,6 +174,54 @@ export class WebChannel implements Channel {
 
     app.get('/api/tasks', (_req, res) => {
       res.json(getAllTasks());
+    });
+
+    app.get('/api/groups/:folder/logs', (req, res) => {
+      const logsPath = join(GROUPS_DIR, req.params.folder, 'logs');
+      if (!existsSync(logsPath)) { res.json([]); return; }
+      const files = readdirSync(logsPath)
+        .filter((f) => f.startsWith('container-') && f.endsWith('.log'))
+        .sort().reverse();
+      const entries = files.slice(0, 100).map((filename) => {
+        try {
+          const head = readFileSync(join(logsPath, filename), 'utf-8').slice(0, 600);
+          return {
+            filename,
+            timestamp: head.match(/Timestamp:\s*(.+)/)?.[1]?.trim() ?? '',
+            duration:  head.match(/Duration:\s*(.+)/)?.[1]?.trim() ?? '',
+            exitCode:  head.match(/Exit Code:\s*(.+)/)?.[1]?.trim() ?? '',
+          };
+        } catch {
+          return { filename, timestamp: '', duration: '', exitCode: '' };
+        }
+      });
+      res.json(entries);
+    });
+
+    app.get('/api/groups/:folder/logs/:filename', (req, res) => {
+      const safe = basename(req.params.filename);
+      if (!safe.startsWith('container-') || !safe.endsWith('.log')) {
+        res.status(400).json({ error: 'Invalid filename' }); return;
+      }
+      const fp = join(GROUPS_DIR, req.params.folder, 'logs', safe);
+      if (!existsSync(fp)) { res.status(404).json({ error: 'Not found' }); return; }
+      res.type('text/plain').send(readFileSync(fp, 'utf-8'));
+    });
+
+    app.get('/api/containers', (_req, res) => {
+      try {
+        const out = execSync(
+          `docker ps --filter name=nanoclaw- --format '{{.Names}}'`,
+          { encoding: 'utf-8', timeout: 5000, env: process.env },
+        );
+        const containers = out.trim().split('\n').filter(Boolean).map((name) => {
+          const m = name.match(/^nanoclaw-(.+?)-\d+$/);
+          return { name, folder: m?.[1] ?? name };
+        });
+        res.json(containers);
+      } catch {
+        res.json([]);
+      }
     });
 
     app.get('/api/dashboard', (_req, res) => {

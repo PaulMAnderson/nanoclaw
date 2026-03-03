@@ -14,6 +14,8 @@ services:
       - ASSISTANT_NAME=${ASSISTANT_NAME:-Andy}
       # Optional: set to "true" if the assistant has its own WhatsApp number
       - ASSISTANT_HAS_OWN_NUMBER=${ASSISTANT_HAS_OWN_NUMBER:-false}
+      # Todoist API token — passed through to agent containers for GTD group
+      - TODOIST_API_TOKEN=${TODOIST_API_TOKEN}
       # Tell Docker CLI to use the isolated nanoclaw daemon, not the host daemon
       - DOCKER_HOST=unix:///var/run/nanoclaw-docker.sock
       # Where to find things

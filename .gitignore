@@ -71,3 +71,9 @@ groups/home/memory/*
 .nanoclaw/
 
 agents-sdk-docs
+!groups/gtd/
+groups/gtd/*
+!groups/gtd/CLAUDE.md
+!groups/gtd/memory/
+groups/gtd/memory/*
+!groups/gtd/memory/MEMORY.md

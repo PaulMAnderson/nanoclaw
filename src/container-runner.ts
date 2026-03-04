@@ -114,7 +114,11 @@ function buildVolumeMounts(
   // Errors are suppressed: files created by the container are owned by the
   // remapped UID and cannot be chmod'd by the host user — that's OK, the
   // container can still access its own files.
-  try { execSync(`sudo chmod -R 777 ${groupSessionsDir}`, { stdio: 'ignore' }); } catch { /* see above */ }
+  try {
+    execSync(`sudo chmod -R 777 ${groupSessionsDir}`, { stdio: 'ignore' });
+  } catch {
+    /* see above */
+  }
   const settingsFile = path.join(groupSessionsDir, 'settings.json');
   if (!fs.existsSync(settingsFile)) {
     fs.writeFileSync(
@@ -210,7 +214,17 @@ function buildVolumeMounts(
  * Secrets are never written to disk or mounted as files.
  */
 function readSecrets(): Record<string, string> {
-  return readEnvFile(['CLAUDE_CODE_OAUTH_TOKEN', 'ANTHROPIC_API_KEY', 'TODOIST_API_TOKEN']);
+  // Core secrets
+  const secrets = readEnvFile(['CLAUDE_CODE_OAUTH_TOKEN', 'ANTHROPIC_API_KEY', 'TODOIST_API_TOKEN']);
+  // OpenRouter configuration for model selection
+  const openRouter = readEnvFile([
+    'ANTHROPIC_AUTH_TOKEN',
+    'ANTHROPIC_BASE_URL',
+    'ANTHROPIC_DEFAULT_OPUS_MODEL',
+    'ANTHROPIC_DEFAULT_SONNET_MODEL',
+    'ANTHROPIC_DEFAULT_HAIKU_MODEL',
+  ]);
+  return { ...secrets, ...openRouter };
 }
 
 function buildContainerArgs(
@@ -259,7 +273,11 @@ export async function runContainerAgent(
   // workspace (logs, memory files). chmod -R 777 is safe here — the group dir
   // is isolated per-group and already bind-mounted with intentional write access.
   // Errors suppressed for the same reason as groupSessionsDir above.
-  try { execSync(`sudo chmod -R 777 ${groupDir}`, { stdio: 'ignore' }); } catch { /* see above */ }
+  try {
+    execSync(`sudo chmod -R 777 ${groupDir}`, { stdio: 'ignore' });
+  } catch {
+    /* see above */
+  }
 
   const mounts = buildVolumeMounts(group, input.isMain);
   const safeName = group.folder.replace(/[^a-zA-Z0-9-]/g, '-');
